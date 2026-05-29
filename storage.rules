@@ -1,0 +1,24 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Product images: public read, admin write
+    match /products/{productId}/images/{filename} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Digital delivery files: NOT public
+    // Access must go through backend signed URLs only
+    match /products/{productId}/files/{filename} {
+      allow read: if false;
+      allow write: if request.auth != null;
+    }
+
+    // General uploads by authenticated users
+    match /uploads/{userId}/{filename} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

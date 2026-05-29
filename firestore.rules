@@ -1,0 +1,80 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: check if user is authenticated
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Helper: get user role from Firestore
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return isAuth() && getUserRole() == 'admin';
+    }
+
+    function isOperator() {
+      return isAuth() && (getUserRole() == 'admin' || getUserRole() == 'operator');
+    }
+
+    // Categories: public read of active, admin write
+    match /categories/{id} {
+      allow read: if resource.data.status == 'active' || isOperator();
+      allow write: if isAdmin();
+    }
+
+    // Products: public read of active only
+    match /products/{productId} {
+      allow read: if resource.data.status == 'active' || isOperator();
+      allow write: if isAdmin();
+
+      // FAQs: same as product
+      match /faqs/{faqId} {
+        allow read: if get(/databases/$(database)/documents/products/$(productId)).data.status == 'active' || isOperator();
+        allow write: if isAdmin();
+      }
+
+      // Digital stock: operators only, no public access
+      match /digitalStock/{codeId} {
+        allow read: if isOperator();
+        allow write: if isAdmin();
+      }
+    }
+
+    // Orders: no public listing; customers can read their own via API
+    match /orders/{orderId} {
+      allow read, write: if isOperator();
+
+      match /items/{itemId} {
+        allow read, write: if isOperator();
+      }
+      match /deliveries/{deliveryId} {
+        allow read, write: if isOperator();
+      }
+      match /notes/{noteId} {
+        allow read, write: if isOperator();
+      }
+    }
+
+    // Payment events: operators only
+    match /paymentEvents/{id} {
+      allow read, write: if isOperator();
+    }
+
+    // Users: admins can manage; operators can read own
+    match /users/{userId} {
+      allow read: if isAuth() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // Settings: public can read store name; sensitive fields via API
+    match /settings/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

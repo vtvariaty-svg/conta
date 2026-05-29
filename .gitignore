@@ -30,8 +30,22 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files — NEVER commit real credentials
+.env
+.env.local
+.env.*.local
+
+# Firebase service account keys — NEVER commit
+*service-account*.json
+*serviceAccount*.json
+*.key.json
+
+# Firebase debug
+.firebase/
+firebase-debug.log*
+
+# Firebaserc (contains project ID — use .firebaserc.example)
+.firebaserc
 
 # vercel
 .vercel
