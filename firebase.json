@@ -6,16 +6,6 @@
   "storage": {
     "rules": "storage.rules"
   },
-  "hosting": {
-    "public": ".next/static",
-    "cleanUrls": true,
-    "rewrites": [
-      {
-        "source": "**",
-        "function": "nextjsFunc"
-      }
-    ]
-  },
   "emulators": {
     "auth": {
       "port": 9099
